@@ -159,7 +159,7 @@ export default function Page() {
               Share to IG / WhatsApp
             </button>
             <a 
-              href="https://wa.me/+91 99254 11642text=I%20got%20roasted%20and%20need%20to%20fix%20my%20fit.%20Show%20me%20the%20Centilliox%20catalog." 
+              href="https://wa.me/919925411642?text=I%20got%20roasted%20and%20need%20to%20fix%20my%20fit.%20Show%20me%20the%20Centilliox%20catalog." 
               target="_blank" 
               rel="noopener noreferrer" 
               className="mt-3 flex w-full items-center justify-center rounded-xl border border-primary/50 bg-transparent px-4 py-3 font-mono text-sm font-bold uppercase text-primary transition hover:bg-primary/10"
