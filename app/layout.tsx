@@ -2,10 +2,10 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
-export const metadata: Metadata = {
-  title: 'Vibe Check — Get Roasted',
-  description: 'Upload a photo. Get a scientifically questionable vibe score.',
-  generator: 'v0.app',
+export const metadata = {
+  title: 'Vibe Check | AI Roast Generator',
+  description: 'Upload a photo and let our AI brutally roast your vibe, fit, and aura. Share your Vibe Score to Instagram and WhatsApp.',
+  keywords: 'AI roast, vibe check, roast my photo, AI outfit rater, Centilliox',
 }
 
 export const viewport: Viewport = {
