@@ -1,16 +1,21 @@
 'use client'
 
 import { toBlob } from 'html-to-image';
-import { ChangeEvent, DragEvent, useRef, useState } from 'react'
+import { ChangeEvent, DragEvent, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { ArrowUpRight, Camera, Check, RotateCcw, Sparkles, Upload, Zap } from 'lucide-react'
+import { ArrowUpRight, Camera, Check, History, RotateCcw, Sparkles, Upload, X, Zap } from 'lucide-react'
 
-type Stage = 'upload' | 'loading' | 'result'
+type Stage = 'upload' | 'loading' | 'result' | 'history'
 
 type RoastResult = {
   roast: string
   vibe_score: number
   focal_point: string
+}
+
+type HistoryItem = RoastResult & {
+  id: number
+  image: string
 }
 
 export default function Page() {
@@ -20,8 +25,14 @@ export default function Page() {
   const [result, setResult] = useState<RoastResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [history, setHistory] = useState<HistoryItem[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   const reduceMotion = useReducedMotion()
+
+  useEffect(() => {
+    const saved = localStorage.getItem('vibe_history')
+    if (saved) setHistory(JSON.parse(saved))
+  }, [])
   
   const acceptFile = async (file?: File) => {
     if (!file || !file.type.startsWith('image/')) return
@@ -41,11 +52,25 @@ export default function Page() {
       if (!response.ok) {
         throw new Error(typeof data.error === 'string' ? data.error : 'Failed to roast')
       }
+      
       setResult({
         roast: data.roast,
         vibe_score: data.vibe_score,
         focal_point: data.focal_point,
       })
+
+      // Convert image to base64 and save to local storage
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+      
+      const newItem = { roast: data.roast, vibe_score: data.vibe_score, focal_point: data.focal_point, image: base64, id: Date.now() };
+      const updatedHistory = [newItem, ...history].slice(0, 6); // Max 6 to prevent storage quota crash
+      setHistory(updatedHistory);
+      localStorage.setItem('vibe_history', JSON.stringify(updatedHistory));
+
       setStage('result')
     } catch {
       URL.revokeObjectURL(preview)
@@ -120,7 +145,15 @@ export default function Page() {
           <div className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground"><Zap className="size-4 fill-current" /></div>
           <span className="font-mono text-sm font-bold tracking-[0.2em]">VIBE<span className="text-primary">/</span>CHECK</span>
         </div>
-        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">AI personality scan <span className="ml-2 inline-block size-1.5 rounded-full bg-primary shadow-[0_0_10px_var(--primary)]" /></span>
+        
+        <div className="flex items-center gap-4">
+          {history.length > 0 && stage !== 'history' && (
+            <button onClick={() => setStage('history')} className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/10 px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest text-primary transition hover:bg-primary/20">
+              <History className="size-3" /> History
+            </button>
+          )}
+          <span className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground sm:inline-block">AI personality scan <span className="ml-2 inline-block size-1.5 rounded-full bg-primary shadow-[0_0_10px_var(--primary)]" /></span>
+        </div>
       </header>
 
       <section className="relative z-10 mx-auto flex min-h-[calc(100dvh-92px)] w-full max-w-6xl flex-col justify-center px-5 pb-12 md:px-10 md:pb-20">
@@ -163,11 +196,41 @@ export default function Page() {
               target="_blank" 
               rel="noopener noreferrer" 
               className="mt-3 flex w-full items-center justify-center rounded-xl border border-primary/50 bg-transparent px-4 py-3 font-mono text-sm font-bold uppercase text-primary transition hover:bg-primary/10"
-             >
+            >
               Fix your fit · Shop Centilliox
-             </a>
-            
+            </a>
           </motion.div>} 
+
+          {stage === 'history' && (
+            <motion.div key="history" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} transition={transition} className="mx-auto w-full max-w-5xl">
+              <div className="mb-10 flex items-end justify-between border-b border-border pb-6">
+                <div>
+                  <h2 className="font-mono text-3xl font-black uppercase tracking-tighter text-primary sm:text-5xl">Hall of Shame</h2>
+                  <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Your past 6 victims</p>
+                </div>
+                <button onClick={reset} className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 font-mono text-xs uppercase tracking-widest text-muted-foreground hover:border-primary hover:text-primary">
+                  <X className="size-4" /> Close
+                </button>
+              </div>
+              
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {history.map((item) => (
+                  <div key={item.id} className="group overflow-hidden rounded-2xl border border-border bg-card transition hover:border-primary/50 hover:shadow-[0_0_30px_rgba(74,222,128,0.1)]">
+                    <div className="relative aspect-[4/3] overflow-hidden border-b border-border">
+                      <img src={item.image} className="size-full object-cover grayscale transition duration-500 group-hover:grayscale-0" alt="Past roast" />
+                      <div className="absolute right-3 top-3 rounded-full bg-background/90 px-3 py-1 font-mono text-lg font-black text-primary backdrop-blur">
+                        {item.vibe_score}
+                      </div>
+                    </div>
+                    <div className="p-5">
+                      <span className="rounded-sm border border-primary/30 bg-primary/10 px-2 py-1 font-mono text-[9px] font-bold tracking-widest text-primary">{item.focal_point}</span>
+                      <p className="mt-4 line-clamp-4 text-sm leading-6 text-muted-foreground">&quot;{item.roast}&quot;</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
           
         </AnimatePresence>
       </section>
