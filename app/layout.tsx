@@ -6,6 +6,9 @@ export const metadata = {
   title: 'Vibe Check | AI Roast Generator',
   description: 'Upload a photo and let our AI brutally roast your vibe, fit, and aura. Share your Vibe Score to Instagram and WhatsApp.',
   keywords: 'AI roast, vibe check, roast my photo, AI outfit rater, Centilliox',
+  verification: {
+    google: 'QXL1ijli_rU-JOJYk1gJ8nGhdakK5y7CwyFa3P8xM" />',
+  },
 }
 
 export const viewport: Viewport = {
